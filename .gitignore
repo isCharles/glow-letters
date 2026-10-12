@@ -4,7 +4,9 @@
 .wheels/
 .tools/
 build/
+build-next/
 dist/
+dist-next/
 release/
 __pycache__/
 *.pyc
