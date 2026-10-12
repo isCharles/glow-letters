@@ -13,6 +13,8 @@ import requests
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'src'))
 import glow_location
 import glow_map
+import glow_app
+import glow_notify
 import sunsetbot
 
 
@@ -86,6 +88,26 @@ class LocationTests(unittest.TestCase):
         self.assertFalse(missing['available'])
         mismatch = sunsetbot.normalize(valid, '北京-海淀区', 'EC', 'set_1', now, 36)
         self.assertEqual(mismatch['reason'], 'response_mismatch')
+
+
+class NotificationLinkTests(unittest.TestCase):
+    def test_notification_links_select_matching_view(self):
+        self.assertEqual(glow_app.event_from_open_url('glowletters://open?event=today-sunset'), 'today-sunset')
+        self.assertEqual(glow_app.event_from_open_url('glowletters://open?event=tomorrow-sunrise'), 'tomorrow-sunrise')
+
+    def test_other_links_are_rejected(self):
+        for url in ('https://example.com/?event=today-sunset',
+                    'glowletters://other?event=today-sunset',
+                    'glowletters://open?event=unknown',
+                    'glowletters://open?event=today-sunset&event=tomorrow-sunrise'):
+            self.assertIsNone(glow_app.event_from_open_url(url))
+
+    def test_toast_click_opens_matching_view(self):
+        with patch.object(glow_notify, 'Notification') as notification, \
+             patch.object(glow_notify.time, 'sleep'):
+            glow_notify.notify('Tomorrow', 'Sunrise', 'tomorrow-sunrise')
+        self.assertEqual(notification.call_args.kwargs['launch'],
+                         'glowletters://open?event=tomorrow-sunrise')
 
 
 if __name__ == '__main__':

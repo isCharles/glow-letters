@@ -35,10 +35,11 @@ def message(data, event):
     return title, '\n'.join(lines)
 
 
-def notify(title, content):
+def notify(title, content, event='today-sunset'):
     language = glow_location.load().get('language', 'en')
     toast = Notification(app_id='霞光来信' if language == 'zh' else 'Glow Letters',
-                         title=title, msg=content, duration='long')
+                         title=title, msg=content, duration='long',
+                         launch=f'glowletters://open?event={event}')
     toast.set_audio(audio.Default, loop=False)
     toast.show()
     time.sleep(2)
@@ -62,7 +63,7 @@ def run(event='today-sunset', test=False):
         language = glow_location.load().get('language', 'en')
         title, content = (('霞光来信 · 查询失败', '这次天空暂时没回信，打开软件可以重试。') if language == 'zh' else
                           ('Glow Letters · unavailable', 'The sky has not replied this time. Open the app to retry.'))
-    notify(title, content)
+    notify(title, content, event)
 
 
 def main():

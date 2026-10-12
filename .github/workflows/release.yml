@@ -21,6 +21,8 @@ jobs:
       - name: Build installer
         shell: pwsh
         run: ./build.ps1
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
       - name: Verify installer exists
         shell: pwsh
         run: |

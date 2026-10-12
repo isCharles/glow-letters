@@ -1,6 +1,6 @@
 # Glow Letters · 霞光来信
 
-Glow Letters is a small Windows app for checking SunsetBot sunrise and sunset glow forecasts. It shows the live GFS and EC values, Windows notifications at 15:00 and 21:00 if you opt in, and a local crop of SunsetBot's official regional map. The interface can be switched between English and 简体中文.
+Glow Letters is a small Windows app for checking SunsetBot sunrise and sunset glow forecasts. It shows the live GFS and EC values, Windows notifications at 15:00 and 21:00 if you opt in, and a local crop of SunsetBot's official regional map. Click a notification to open the matching sunrise or sunset view. The interface can be switched between English and 简体中文.
 
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.
 
@@ -18,7 +18,7 @@ SunsetBot and public OpenStreetMap services are independent third-party services
 
 ## Build from source
 
-Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app, and creates `release/GlowLetters-0.1.0-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
+Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app, and creates `release/GlowLetters-0.1.1-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
 
 To run from source without building, install `requirements.txt` and run `python src/glow_app.py`. `python src/glow_app.py --test-notification` sends one Windows test notification. `python src/sunsetbot.py --city '北京-海淀区' --event tomorrow-sunrise` prints fresh JSON; exit codes 0, 2 and 3 mean full, partial and no valid model forecasts respectively.
 
@@ -28,7 +28,7 @@ Place searches and nearby-place lookups are cached locally to reduce load on pub
 
 ## 中文说明
 
-霞光来信是一款 Windows 朝霞、晚霞查询软件，提供 SunsetBot 的 GFS 和 EC 数据、官方区域图的本地局部放大，以及可选的每天 15:00 和 21:00 消息通知。界面可切换 English / 简体中文。请从 GitHub Release 下载带安装向导的安装包；安装时可以选择定时通知和桌面快捷方式，软件不设置开机自启。
+霞光来信是一款 Windows 朝霞、晚霞查询软件，提供 SunsetBot 的 GFS 和 EC 数据、官方区域图的本地局部放大，以及可选的每天 15:00 和 21:00 消息通知。点击整条消息通知可打开对应的朝霞或晚霞页面。界面可切换 English / 简体中文。请从 GitHub Release 下载带安装向导的安装包；安装时可以选择定时通知和桌面快捷方式，软件不设置开机自启。
 
 点击“获取位置”后，软件会显示 Windows 返回的经纬度和精度。向 Photon 发送坐标以推荐附近地点前会先征求同意，也可以只使用坐标。附近列表来自 OpenStreetMap 中实际存在的地点；可以选择建筑、公园，或直接使用当前坐标，也可以手动搜索。附近能否出现具体宿舍或教学楼，取决于地图数据库是否收录。选中的地点用于地图标记和裁切；**预报仍来自页面上单独注明的 SunsetBot 地区**，不能把建筑当成精确预报点。目前局部放大只适用于官方“中东”区域图覆盖的东经 100°–124°、北纬 17°–42°；地图放大只是裁切原图，不会提高模型分辨率。
 
