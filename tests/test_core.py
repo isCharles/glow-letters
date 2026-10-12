@@ -13,7 +13,6 @@ import requests
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'src'))
 import glow_location
 import glow_map
-import glow_app
 import glow_notify
 import sunsetbot
 
@@ -91,23 +90,27 @@ class LocationTests(unittest.TestCase):
 
 
 class NotificationLinkTests(unittest.TestCase):
-    def test_notification_links_select_matching_view(self):
-        self.assertEqual(glow_app.event_from_open_url('glowletters://open?event=today-sunset'), 'today-sunset')
-        self.assertEqual(glow_app.event_from_open_url('glowletters://open?event=tomorrow-sunrise'), 'tomorrow-sunrise')
-
-    def test_other_links_are_rejected(self):
-        for url in ('https://example.com/?event=today-sunset',
-                    'glowletters://other?event=today-sunset',
-                    'glowletters://open?event=unknown',
-                    'glowletters://open?event=today-sunset&event=tomorrow-sunrise'):
-            self.assertIsNone(glow_app.event_from_open_url(url))
-
     def test_toast_click_opens_matching_view(self):
-        with patch.object(glow_notify, 'Notification') as notification, \
-             patch.object(glow_notify.time, 'sleep'):
-            glow_notify.notify('Tomorrow', 'Sunrise', 'tomorrow-sunrise')
-        self.assertEqual(notification.call_args.kwargs['launch'],
-                         'glowletters://open?event=tomorrow-sunrise')
+        with tempfile.TemporaryDirectory() as directory:
+            executable = pathlib.Path(directory) / 'GlowLetters.exe'
+            sunrise = executable.with_name('Open Sunrise.lnk')
+            sunset = executable.with_name('Open Sunset.lnk')
+            sunrise.touch()
+            sunset.touch()
+            with patch.object(glow_notify.sys, 'frozen', True, create=True), \
+                 patch.object(glow_notify.sys, 'executable', str(executable)), \
+                 patch.object(glow_notify, 'Notification') as notification, \
+                 patch.object(glow_notify.time, 'sleep'):
+                glow_notify.notify('Tomorrow', 'Sunrise', 'tomorrow-sunrise')
+                self.assertEqual(notification.call_args.kwargs['launch'], sunrise.as_uri())
+                glow_notify.notify('Today', 'Sunset', 'today-sunset')
+                self.assertEqual(notification.call_args.kwargs['launch'], sunset.as_uri())
+
+    def test_missing_shortcut_has_no_broken_click_action(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(glow_notify.sys, 'frozen', True, create=True), \
+             patch.object(glow_notify.sys, 'executable', str(pathlib.Path(directory) / 'GlowLetters.exe')):
+            self.assertEqual(glow_notify.launch_uri('tomorrow-sunrise'), '')
 
 
 if __name__ == '__main__':

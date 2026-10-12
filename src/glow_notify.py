@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import os
 import pathlib
+import sys
 import time
 
 from winotify import Notification, audio
@@ -35,11 +36,20 @@ def message(data, event):
     return title, '\n'.join(lines)
 
 
+def launch_uri(event):
+    """Installed shortcuts preserve the event when a Windows toast is clicked."""
+    if not getattr(sys, 'frozen', False):
+        return ''
+    name = 'Open Sunrise.lnk' if event == 'tomorrow-sunrise' else 'Open Sunset.lnk'
+    shortcut = pathlib.Path(sys.executable).with_name(name)
+    return shortcut.as_uri() if shortcut.is_file() else ''
+
+
 def notify(title, content, event='today-sunset'):
     language = glow_location.load().get('language', 'en')
     toast = Notification(app_id='霞光来信' if language == 'zh' else 'Glow Letters',
                          title=title, msg=content, duration='long',
-                         launch=f'glowletters://open?event={event}')
+                         launch=launch_uri(event))
     toast.set_audio(audio.Default, loop=False)
     toast.show()
     time.sleep(2)

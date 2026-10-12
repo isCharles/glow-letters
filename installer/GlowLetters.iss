@@ -1,5 +1,5 @@
 #define AppName "Glow Letters"
-#define AppVersion "0.1.1"
+#define AppVersion "0.1.2"
 #define AppPublisher "isCharles"
 #define AppExe "GlowLetters.exe"
 #ifndef AppDist
@@ -39,11 +39,8 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\Glow Letters"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\Glow Letters"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
-
-[Registry]
-Root: HKCU; Subkey: "Software\Classes\glowletters"; ValueType: string; ValueName: ""; ValueData: "URL:Glow Letters"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\glowletters"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCU; Subkey: "Software\Classes\glowletters\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --open-url ""%1"""
+Name: "{app}\Open Sunrise"; Filename: "{app}\{#AppExe}"; Parameters: "--event tomorrow-sunrise"
+Name: "{app}\Open Sunset"; Filename: "{app}\{#AppExe}"; Parameters: "--event today-sunset"
 
 [Run]
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tasks.ps1"" -Mode Install -ExePath ""{app}\{#AppExe}"""; Flags: runhidden waituntilterminated; Check: WizardIsTaskSelected('daily')
