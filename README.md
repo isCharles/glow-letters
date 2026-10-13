@@ -1,3 +1,5 @@
+![Glow Letters — Let the sky write to you.](assets/readme-cover.svg)
+
 # Glow Letters · 霞光来信
 
 Glow Letters is a small Windows app for checking SunsetBot sunrise and sunset glow forecasts. It shows the live GFS and EC values, Windows notifications at 15:00 and 21:00 if you opt in, and a local crop of SunsetBot's official regional map. Click a notification to open the matching sunrise or sunset view. The interface can be switched between English and 简体中文.

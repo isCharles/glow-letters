@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">Glow Letters — Let the sky write to you.</title>
+  <desc id="desc">Electric blue and warm amber ribbons drift across a midnight sky, behind an elegant white serif headline.</desc>
+  <defs>
+    <linearGradient id="night" x2="0.7" y2="1"><stop stop-color="#071080"/><stop offset=".45" stop-color="#08103b"/><stop offset="1" stop-color="#080f17"/></linearGradient>
+    <linearGradient id="blue"><stop stop-color="#1b22d9"/><stop offset=".35" stop-color="#324ddb"/><stop offset=".65" stop-color="#58a8cf"/><stop offset="1" stop-color="#2452cd"/></linearGradient>
+    <linearGradient id="gold"><stop stop-color="#98b9bc"/><stop offset=".35" stop-color="#deb675"/><stop offset=".65" stop-color="#cd896a"/><stop offset="1" stop-color="#758ac2"/></linearGradient>
+    <linearGradient id="shade" x2="0" y2="1"><stop stop-color="#060d1a" stop-opacity="0"/><stop offset="1" stop-color="#080e15" stop-opacity=".94"/></linearGradient>
+    <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".09"/><stop offset="1" stop-color="#ffffff" stop-opacity=".025"/></linearGradient>
+    <filter id="wide" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="47"/></filter>
+    <filter id="soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="20"/></filter>
+    <clipPath id="frame"><rect width="1600" height="760" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1600" height="760" fill="url(#night)"/>
+    <g fill="none" stroke-linecap="round">
+      <path d="M-240 630 C190 665 400 260 770 155 S1270 110 1770 290" stroke="#284de2" stroke-width="250" filter="url(#wide)"/>
+      <path d="M-200 520 C170 635 490 275 835 135 S1340 80 1760 270" stroke="url(#blue)" stroke-width="100" filter="url(#soft)"/>
+      <path d="M-200 675 C260 675 540 265 910 75 S1320 -10 1770 140" stroke="url(#gold)" stroke-width="55" opacity=".75" filter="url(#soft)"/>
+      <path d="M-200 740 C170 730 525 440 960 275 S1390 245 1710 450" stroke="url(#blue)" stroke-width="150" filter="url(#wide)"/>
+      <path d="M-120 745 C265 655 620 410 1000 300 S1440 260 1700 415" stroke="url(#gold)" stroke-width="25" opacity=".82" filter="url(#soft)"/>
+      <path d="M-120 420 C340 495 580 155 1000 85 S1510 145 1720 220" stroke="#87c1d9" stroke-width="29" opacity=".45" filter="url(#soft)"/>
+    </g>
+    <rect width="1600" height="760" fill="url(#shade)"/>
+    <g stroke="#edf5ff" stroke-opacity=".14" stroke-width="1">
+      <path d="M64 0V760 M554 0V760 M1044 0V760 M1536 0V760"/>
+      <path d="M64 106H1536 M64 700H1536" stroke-opacity=".08"/>
+    </g>
+    <g fill="#f7f7f2">
+      <g transform="translate(67 52)" stroke="#f7f7f2" stroke-width="1.4" fill="none">
+        <rect width="26" height="19" x="0" y="0" rx="3"/>
+        <path d="M1 2L13 11L25 2 M3 17L10 10 M23 17L16 10"/>
+        <path d="M33 0H42 M37.5 -4.5V4.5" stroke-opacity=".65"/>
+      </g>
+      <text x="119" y="69" font-family="Georgia, 'Times New Roman', serif" font-size="23" letter-spacing="1.3">GLOW LETTERS</text>
+      <text x="1536" y="67" text-anchor="end" font-family="Arial, sans-serif" font-size="12" letter-spacing="2.7" opacity=".7">A LITTLE NOTE FROM THE SKY</text>
+      <text x="67" y="353" font-family="Arial, sans-serif" font-size="12" letter-spacing="3.2" opacity=".65">SUNRISE / SUNSET / A MOMENT TO LOOK UP</text>
+      <text x="62" y="457" font-family="Georgia, 'Times New Roman', serif" font-size="96" letter-spacing="-3">Let the sky</text>
+      <text x="62" y="561" font-family="Georgia, 'Times New Roman', serif" font-size="96" letter-spacing="-3">write to you.</text>
+      <text x="67" y="659" font-family="Arial, sans-serif" font-size="13" letter-spacing="2.2" opacity=".56">GLOW LETTERS — WINDOWS</text>
+    </g>
+    <g transform="translate(1080 484)">
+      <rect width="420" height="155" rx="17" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".14"/>
+      <text x="28" y="40" fill="#e1e8ee" font-family="Arial, sans-serif" font-size="17">
+        <tspan x="28">Sunrise whispers. Sunset lingers.</tspan>
+        <tspan x="28" dy="27">A letter arrives. You look up.</tspan>
+      </text>
+      <path d="M28 109H392" stroke="#ffffff" stroke-opacity=".12"/>
+      <text x="28" y="136" fill="#e1e8ee" font-family="Arial, sans-serif" font-size="11" letter-spacing="2">ENGLISH / 简体中文</text>
+      <path d="M376 135L390 121 M379 121H390V132" fill="none" stroke="#e1e8ee" stroke-width="1.2"/>
+    </g>
+  </g>
+</svg>
