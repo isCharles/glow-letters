@@ -2,24 +2,25 @@
   <title id="title">Glow Letters — Let the sky write to you.</title>
   <desc id="desc">Electric blue and warm amber ribbons drift across a midnight sky, behind an elegant white serif headline.</desc>
   <defs>
-    <linearGradient id="night" x2="0.7" y2="1"><stop stop-color="#071080"/><stop offset=".45" stop-color="#08103b"/><stop offset="1" stop-color="#080f17"/></linearGradient>
-    <linearGradient id="blue"><stop stop-color="#1b22d9"/><stop offset=".35" stop-color="#324ddb"/><stop offset=".65" stop-color="#58a8cf"/><stop offset="1" stop-color="#2452cd"/></linearGradient>
-    <linearGradient id="gold"><stop stop-color="#98b9bc"/><stop offset=".35" stop-color="#deb675"/><stop offset=".65" stop-color="#cd896a"/><stop offset="1" stop-color="#758ac2"/></linearGradient>
-    <linearGradient id="shade" x2="0" y2="1"><stop stop-color="#060d1a" stop-opacity="0"/><stop offset="1" stop-color="#080e15" stop-opacity=".94"/></linearGradient>
+    <linearGradient id="night" x2="0.7" y2="1"><stop stop-color="#090bb8"/><stop offset=".45" stop-color="#10145d"/><stop offset="1" stop-color="#080f17"/></linearGradient>
+    <linearGradient id="blue"><stop stop-color="#161dff"/><stop offset=".35" stop-color="#245aff"/><stop offset=".65" stop-color="#65d4ff"/><stop offset="1" stop-color="#1755f1"/></linearGradient>
+    <linearGradient id="gold"><stop stop-color="#75ccff"/><stop offset=".35" stop-color="#ffd16c"/><stop offset=".65" stop-color="#ff986d"/><stop offset="1" stop-color="#b68aff"/></linearGradient>
+    <linearGradient id="shade" x2="0" y2="1"><stop stop-color="#060d1a" stop-opacity="0"/><stop offset=".55" stop-color="#080e15" stop-opacity=".08"/><stop offset="1" stop-color="#080e15" stop-opacity=".72"/></linearGradient>
     <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".09"/><stop offset="1" stop-color="#ffffff" stop-opacity=".025"/></linearGradient>
-    <filter id="wide" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="47"/></filter>
-    <filter id="soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="20"/></filter>
+    <filter id="wide" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="32"/></filter>
+    <filter id="soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="13"/></filter>
     <clipPath id="frame"><rect width="1600" height="760" rx="20"/></clipPath>
   </defs>
   <g clip-path="url(#frame)">
     <rect width="1600" height="760" fill="url(#night)"/>
     <g fill="none" stroke-linecap="round">
-      <path d="M-240 630 C190 665 400 260 770 155 S1270 110 1770 290" stroke="#284de2" stroke-width="250" filter="url(#wide)"/>
-      <path d="M-200 520 C170 635 490 275 835 135 S1340 80 1760 270" stroke="url(#blue)" stroke-width="100" filter="url(#soft)"/>
-      <path d="M-200 675 C260 675 540 265 910 75 S1320 -10 1770 140" stroke="url(#gold)" stroke-width="55" opacity=".75" filter="url(#soft)"/>
-      <path d="M-200 740 C170 730 525 440 960 275 S1390 245 1710 450" stroke="url(#blue)" stroke-width="150" filter="url(#wide)"/>
-      <path d="M-120 745 C265 655 620 410 1000 300 S1440 260 1700 415" stroke="url(#gold)" stroke-width="25" opacity=".82" filter="url(#soft)"/>
-      <path d="M-120 420 C340 495 580 155 1000 85 S1510 145 1720 220" stroke="#87c1d9" stroke-width="29" opacity=".45" filter="url(#soft)"/>
+      <path d="M-240 630 C190 665 400 260 770 155 S1270 110 1770 290" stroke="#153bff" stroke-width="290" filter="url(#wide)"/>
+      <path d="M-200 520 C170 635 490 275 835 135 S1340 80 1760 270" stroke="url(#blue)" stroke-width="125" filter="url(#soft)"/>
+      <path d="M-200 675 C260 675 540 265 910 75 S1320 -10 1770 140" stroke="url(#gold)" stroke-width="65" opacity=".98" filter="url(#soft)"/>
+      <path d="M-180 770 C230 760 560 460 1000 330 S1460 310 1770 520" stroke="#080d65" stroke-width="110" opacity=".8" filter="url(#soft)"/>
+      <path d="M-200 740 C170 730 525 440 960 275 S1390 245 1710 450" stroke="url(#blue)" stroke-width="160" filter="url(#wide)"/>
+      <path d="M-120 745 C265 655 620 410 1000 300 S1440 260 1700 415" stroke="url(#gold)" stroke-width="33" filter="url(#soft)"/>
+      <path d="M-120 420 C340 495 580 155 1000 85 S1510 145 1720 220" stroke="#88e5ff" stroke-width="38" opacity=".72" filter="url(#soft)"/>
     </g>
     <rect width="1600" height="760" fill="url(#shade)"/>
     <g stroke="#edf5ff" stroke-opacity=".14" stroke-width="1">
