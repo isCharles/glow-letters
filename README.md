@@ -2,7 +2,15 @@
 
 # Glow Letters · 霞光来信
 
-Glow Letters is a small Windows app for sunrise and sunset forecasts. It retrieves weather directly from NOAA/NCEP GFS and ECMWF IFS, calculates solar times locally, and shows SunsetBot glow values separately. Optional Windows notifications arrive at 15:00 and 21:00; click one to open the matching view. The interface supports English and 简体中文.
+Glow Letters turns sunrise and sunset forecasts into a little note about whether to head outside. Sunsethue provides the primary quality forecast; NOAA/NCEP GFS and ECMWF IFS weather are available in expandable details. Optional Windows notifications arrive at 15:00 and 21:00; click one to open the matching view. The interface supports English and 简体中文.
+
+## Connect Sunsethue
+
+Get your personal free API key from the [Sunsethue developer portal](https://sunsethue.com/dev-api), then open **Forecast service → Save and refresh** in the app. The key is encrypted with Windows DPAPI for your Windows account, under `%LOCALAPPDATA%\GlowLetters\sunsethue-key.dat`; it is not included in forecast logs or this repository. For unattended use, `SUNSETHUE_API_KEY` is also supported. The service's free plan is for personal/hobby use, with 1,000 credits per day; each quality-event query uses five credits. Check the provider's current terms before commercial use.
+
+The main card and notification translate Sunsethue's Poor/Fair/Good/Great/Excellent categories into viewing advice. The quality score is **not a probability**, and a good forecast does not guarantee a spectacular sky. Suggested departure times assume a 10-minute walk and arrival 15 minutes before sunrise/sunset; sunrise wake-up advice adds 20 minutes to prepare. These are planning suggestions, not predicted peak-glow times. Golden/blue-hour data, when returned, are retained in the result JSON rather than relabeled as peak glow.
+
+If Sunsethue is unavailable, fresh valid SunsetBot regional forecasts may provide a clearly named fallback. With no usable quality forecast, the app says it cannot judge; raw weather is never converted into an invented score. `GlowLetters.exe --sunsethue-json result.json --lat 40 --lon 116 --event tomorrow-sunrise` verifies the provider using your locally configured key without opening the app. A missing key produces `not_configured`, not fabricated data. Source: [Sunsethue API](https://sunsethue.com/dev-api), [quality guide](https://sunsethue.com/guide).
 
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.
 
@@ -18,7 +26,7 @@ The selected place controls the marker and crop on the map. SunsetBot forecasts 
 
 **Solar times:** Astral computes sunrise/sunset locally from the selected coordinates, using standard refraction assumptions and an unobstructed horizon. Times are shown in UTC+8. Buildings, terrain, unusual refraction and cloud can change what you actually see; polar days/nights can have no solar crossing. The app does not rely on SunsetBot for solar times or countdowns.
 
-The app queries SunsetBot for today's and tomorrow's sunrise/sunset, separately for GFS and EC. It rejects model/date/city mismatches, stale model runs, and missing quality values. `0.0` is a real zero; missing values remain missing. The displayed time interval is a fixed window around the locally calculated sunrise or sunset time, **not** a predicted best-glow interval. Glow intensity and AOD remain attributed to SunsetBot, even when official weather is available.
+The app queries SunsetBot for today's and tomorrow's sunrise/sunset, separately for GFS and EC. It rejects model/date/city mismatches, stale model runs, and missing quality values. `0.0` is a real zero; missing values remain missing. Solar time is displayed as a single time, not a predicted best-glow interval. SunsetBot intensity and AOD remain separately attributed in details, even when official weather is available. Selecting GFS/EC changes these details and SunsetBot maps; it does not change the Sunsethue conclusion.
 
 SunsetBot and public OpenStreetMap services are independent third-party services. They can be unavailable or change without notice. The official map link remains visible so you can open the original image. The app does not send your position to a server controlled by this project. To look up nearby places, it sends the selected coordinates to Photon (an OpenStreetMap-based service), with Overpass as a fallback; it checks district names with SunsetBot. Configuration and query history stay under your Windows user profile (`%APPDATA%\GlowLetters` and `%LOCALAPPDATA%\GlowLetters`).
 
@@ -38,12 +46,14 @@ Place searches and nearby-place lookups are cached locally to reduce load on pub
 
 ## 中文说明
 
+先在 [Sunsethue 开发者页面](https://sunsethue.com/dev-api) 申请个人免费 API Key，再在软件“预报服务”中保存。Key 使用 Windows DPAPI 加密，仅供当前 Windows 账户读取，不进入预报记录或仓库。主界面和消息通知优先给出“值不值得出去看”的建议，NOAA/ECMWF 天气放在“查看依据”里。Sunsethue 的质量评分不是发生概率；出门建议按步行10分钟、日出日落前15分钟到场估算，朝霞再留20分钟准备，不能称为最佳霞光窗口。Sunsethue 不可用时明确标注 SunsetBot 地区预报降级；两个服务都缺报时不编造结论。免费方案用于个人爱好，每日1,000额度，单次质量预报5额度，商用请先查看服务条款。
+
 从 0.2.0 开始，软件直接读取 NOAA/NCEP GFS 和 ECMWF IFS 官方天气数据，并按所选经纬度本地计算日出日落。界面展示官方云量、可用天气字段、起报时间、有效时间以及实际模型网格和距离；官方天气不是火烧云鲜艳度。SunsetBot 的鲜艳度、AOD 和图片仍单独标注来源，互不冒充。GFS 使用最近的小时预报，IFS 使用最近的三小时预报，界面会显示实际有效时间。缺项显示“—”，拒绝超过 30 小时的模型起报；最新候选不可用时尝试前四个周期，不拿旧缓存顶替。日出日落和倒计时不再依赖 SunsetBot，所有时刻仍显示为北京时间；地形、建筑和云雾可能影响实际观测。
 
 霞光来信是一款 Windows 朝霞、晚霞查询软件，提供 SunsetBot 的 GFS 和 EC 数据、官方区域图的本地局部放大，以及可选的每天 15:00 和 21:00 消息通知。点击整条消息通知可打开对应的朝霞或晚霞页面。界面可切换 English / 简体中文。请从 GitHub Release 下载带安装向导的安装包；安装时可以选择定时通知和桌面快捷方式，软件不设置开机自启。
 
 点击“获取位置”后，软件会显示 Windows 返回的经纬度和精度。向 Photon 发送坐标以推荐附近地点前会先征求同意，也可以只使用坐标。附近列表来自 OpenStreetMap 中实际存在的地点；可以选择建筑、公园，或直接使用当前坐标，也可以手动搜索。附近能否出现具体宿舍或教学楼，取决于地图数据库是否收录。选中的地点用于地图标记和裁切；**预报仍来自页面上单独注明的 SunsetBot 地区**，不能把建筑当成精确预报点。目前局部放大只适用于官方“中东”区域图覆盖的东经 100°–124°、北纬 17°–42°；地图放大只是裁切原图，不会提高模型分辨率。
 
-软件分别查询 GFS 和 EC，不把缺报当成 0，也不使用日期、模型或地区不匹配的结果。显示的时间区间是围绕日出日落时刻的固定窗口，不是“最佳霞光时段”。遇到第三方服务不可用时，软件会明确显示缺报或保留官方图片链接。地点和查询历史保存在当前 Windows 用户配置目录；本项目没有自建位置数据服务器。数据与图片版权分别属于 SunsetBot、OpenStreetMap 及相应贡献者，本项目与 SunsetBot 无隶属关系。
+软件分别查询 GFS 和 EC，不把缺报当成 0，也不使用日期、模型或地区不匹配的结果。太阳时刻是单一时刻，不是“最佳霞光时段”；GFS/EC 选择只影响天气详情和 SunsetBot 地图，不改变 Sunsethue 结论。遇到第三方服务不可用时，软件会明确显示缺报或保留官方图片链接。地点和查询历史保存在当前 Windows 用户配置目录；本项目没有自建位置数据服务器。数据与图片版权分别属于原服务及相应贡献者，本项目与预报服务无隶属关系。
 
 开发与打包：Windows + Python 3.13 + Inno Setup 6，运行 `./build.ps1`。源码运行先安装 `requirements.txt`，再执行 `python src/glow_app.py`。

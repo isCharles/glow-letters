@@ -46,13 +46,13 @@ class OfficialTests(unittest.TestCase):
         now = dt.datetime(2026, 6, 21, tzinfo=weather.TZ)
         self.assertIsNone(weather.solar_events(89, 0, ['today-sunrise'], now)['today-sunrise'])
 
-    def test_notification_keeps_official_cloud_when_sunsetbot_is_missing(self):
+    def test_weather_only_notification_does_not_invent_glow_result(self):
         data = {'results': [], 'official': {'solar': {'today-sunset': '2026-10-14T17:37:00+08:00'},
                 'results': [{'model': 'GFS', 'available': True, 'fields': {'cloud_total_pct': 0}}]}}
         with patch.object(glow_notify.glow_location, 'load', return_value={'language': 'en'}):
             _, message = glow_notify.message(data, 'today-sunset')
-        self.assertIn('NOAA GFS cloud 0%', message)
-        self.assertIn('SunsetBot unavailable', message)
+        self.assertIn('Cannot judge', message)
+        self.assertNotIn('cloud 0%', message)
         self.assertIn('17:37', message)
 
     def test_ecmwf_full_file_response_is_rejected(self):

@@ -14,10 +14,11 @@ def main():
     parser.add_argument('--notify', action='store_true')
     parser.add_argument('--test-notification', action='store_true')
     parser.add_argument('--official-json', type=pathlib.Path, help='Write fresh official weather JSON without opening the app')
+    parser.add_argument('--sunsethue-json', type=pathlib.Path, help='Write a fresh Sunsethue result using the locally saved key')
     parser.add_argument('--lat', type=float)
     parser.add_argument('--lon', type=float)
     args = parser.parse_args()
-    if args.official_json:
+    if args.official_json or args.sunsethue_json:
         import glow_location
         import official_weather
         location = glow_location.load()
@@ -25,8 +26,12 @@ def main():
         lon = args.lon if args.lon is not None else location.get('lon')
         if lat is None or lon is None:
             parser.error('Choose a location or provide --lat and --lon')
-        data = official_weather.fetch(lat, lon, [args.event])
-        args.official_json.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+        if args.sunsethue_json:
+            import sunsethue
+            data = sunsethue.fetch(lat, lon, [args.event])
+        else:
+            data = official_weather.fetch(lat, lon, [args.event])
+        (args.sunsethue_json or args.official_json).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
         return official_weather.exit_code(data)
     if args.notify or args.test_notification:
         import glow_notify
