@@ -14,6 +14,8 @@ The Chinese presentation conservatively maps those five provider categories to å
 
 If Sunsethue is unavailable, fresh valid SunsetBot regional forecasts may provide a clearly named fallback. With no usable quality forecast, the app says it cannot judge; raw weather is never converted into an invented score. `GlowLetters.exe --sunsethue-json result.json --lat 40 --lon 116 --event tomorrow-sunrise` verifies the provider using your locally configured key without opening the app. A missing key produces `not_configured`, not fabricated data. Source: [Sunsethue API](https://sunsethue.com/dev-api), [quality guide](https://sunsethue.com/guide).
 
+Forecast requests send the selected coordinates and the `x-api-key` authentication header directly to Sunsethue over HTTPS. The provider receives these requests; this project runs no intermediary server. You may revoke the key in the provider's portal and remove the local encrypted file to disconnect the service.
+
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.
 
 ## Location and forecast areas
