@@ -51,12 +51,12 @@ def normalize(raw, city, model, event, now, max_age):
     result.update(available=True, reason=None)
     return result
 
-def fetch(city, events=None, max_age=36):
+def fetch(city, events=None, max_age=36, retry_count=2, request_timeout=(10, 25)):
     if not city:
         raise ValueError('Choose a forecast area first')
     now = dt.datetime.now(TZ)
     session = requests.Session()
-    retry = Retry(total=2, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504], allowed_methods=['GET'], respect_retry_after_header=False)
+    retry = Retry(total=retry_count, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504], allowed_methods=['GET'], respect_retry_after_header=False)
     session.mount('https://', HTTPAdapter(max_retries=retry))
     results = []
     for name in events or ['today-sunset', 'tomorrow-sunrise']:
@@ -68,7 +68,7 @@ def fetch(city, events=None, max_age=36):
             try:
                 # 每次显式传城市，不依赖网站 cookie。TLS 证书校验保持开启。
                 session.cookies.clear()
-                response = session.get('https://sunsetbot.top/', params=params, timeout=(10, 25))
+                response = session.get('https://sunsetbot.top/', params=params, timeout=request_timeout)
                 row.update(http_status=response.status_code, url=response.url,
                            request_headers=dict(response.request.headers),
                            response_headers={k:v for k,v in response.headers.items() if k.lower() != 'set-cookie'},

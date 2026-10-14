@@ -1,6 +1,7 @@
 .venv/
 .buildvenv/
 .builddeps/
+.officialdeps/
 .wheels/
 .tools/
 build/

@@ -2,7 +2,7 @@
 
 # Glow Letters · 霞光来信
 
-Glow Letters is a small Windows app for checking SunsetBot sunrise and sunset glow forecasts. It shows the live GFS and EC values, Windows notifications at 15:00 and 21:00 if you opt in, and a local crop of SunsetBot's official regional map. Click a notification to open the matching sunrise or sunset view. The interface can be switched between English and 简体中文.
+Glow Letters is a small Windows app for sunrise and sunset forecasts. It retrieves weather directly from NOAA/NCEP GFS and ECMWF IFS, calculates solar times locally, and shows SunsetBot glow values separately. Optional Windows notifications arrive at 15:00 and 21:00; click one to open the matching view. The interface supports English and 简体中文.
 
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.
 
@@ -14,21 +14,31 @@ The selected place controls the marker and crop on the map. SunsetBot forecasts 
 
 ## Forecast data and limitations
 
-The app queries SunsetBot for today's and tomorrow's sunrise/sunset, separately for GFS and EC. It rejects model/date/city mismatches, stale model runs, and missing quality values. `0.0` is a real zero; missing values remain missing. The displayed time interval is a fixed window around the reported sunrise or sunset time, **not** a predicted best-glow interval. AOD is shown exactly as reported by SunsetBot.
+**Official weather:** the app requests a small GFS region from NOAA NOMADS and selected IFS GRIB records directly from ECMWF's Open Data server. Both use 0.25° grids; the nearest model grid point, distance, run time and valid time are displayed. GFS supplies total/low/mid/high cloud, 2 m humidity, visibility and instantaneous precipitation rate. The IFS subset used here supplies total cloud, 2 m temperature and dew point; unavailable fields remain missing. These are weather forecasts, not an official glow score. GFS uses the nearest hourly step, IFS the nearest three-hourly step; these times can differ from sunrise/sunset and are shown explicitly. Only model runs no more than 30 hours old are accepted, and decoded GRIB times must match the requested run and step. If the latest candidate run is not available, up to four preceding cycles are tried. No old cached forecast is substituted.
+
+**Solar times:** Astral computes sunrise/sunset locally from the selected coordinates, using standard refraction assumptions and an unobstructed horizon. Times are shown in UTC+8. Buildings, terrain, unusual refraction and cloud can change what you actually see; polar days/nights can have no solar crossing. The app does not rely on SunsetBot for solar times or countdowns.
+
+The app queries SunsetBot for today's and tomorrow's sunrise/sunset, separately for GFS and EC. It rejects model/date/city mismatches, stale model runs, and missing quality values. `0.0` is a real zero; missing values remain missing. The displayed time interval is a fixed window around the locally calculated sunrise or sunset time, **not** a predicted best-glow interval. Glow intensity and AOD remain attributed to SunsetBot, even when official weather is available.
 
 SunsetBot and public OpenStreetMap services are independent third-party services. They can be unavailable or change without notice. The official map link remains visible so you can open the original image. The app does not send your position to a server controlled by this project. To look up nearby places, it sends the selected coordinates to Photon (an OpenStreetMap-based service), with Overpass as a fallback; it checks district names with SunsetBot. Configuration and query history stay under your Windows user profile (`%APPDATA%\GlowLetters` and `%LOCALAPPDATA%\GlowLetters`).
 
 ## Build from source
 
-Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app, and creates `release/GlowLetters-0.1.2-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
+Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app (including ECMWF ecCodes), and creates `release/GlowLetters-0.2.0-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
 
 To run from source without building, install `requirements.txt` and run `python src/glow_app.py`. `python src/glow_app.py --test-notification` sends one Windows test notification. `python src/sunsetbot.py --city '北京-海淀区' --event tomorrow-sunrise` prints fresh JSON; exit codes 0, 2 and 3 mean full, partial and no valid model forecasts respectively.
+
+`python src/official_weather.py --lat 40 --lon 116 --event all --output official.json` retrieves fresh official GFS/IFS weather for today's sunset and tomorrow's sunrise. Inspect each result's `available`, `run_time`, `valid_time`, `grid`, `http_status` and `fields`; failed attempts remain recorded, and unavailable values are never turned into zero. Official requests send a coordinate bounding box to NOAA; ECMWF receives model-file requests and coordinates are used locally for grid extraction. Data: [NOAA NOMADS](https://nomads.ncep.noaa.gov/) and [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data), the latter under CC BY 4.0. Solar calculations: [Astral](https://astral.readthedocs.io/). Official source outages do not change SunsetBot values, and SunsetBot outages do not prevent local solar calculations or independently returned official forecasts.
+
+The installed app also supports `GlowLetters.exe --official-json official.json --lat 40 --lon 116 --event tomorrow-sunrise`. Omit the coordinates to use the saved location. Both JSON commands return 0 for all models available, 2 for partial availability, and 3 for no usable model forecast. They write a new result, including failures, rather than returning a previous response.
 
 The bundled `city-geo.json` district-coordinate dataset has its own [Mulan PSL v2 license](CITY-GEO-LICENSE.txt). Map and place data are attributed to [OpenStreetMap contributors](https://www.openstreetmap.org/copyright); place data are subject to ODbL. The public [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/) limits searches, so the app searches only when you request it. SunsetBot owns its forecasts and maps; this project is unaffiliated with SunsetBot.
 
 Place searches and nearby-place lookups are cached locally to reduce load on public map servers. Operators can switch to other compatible services without rebuilding the app through the `GLOW_NOMINATIM_URL`, `GLOW_PHOTON_URL`, and `GLOW_OVERPASS_URL` environment variables. Large deployments should use a hosted or self-hosted map-data provider rather than relying on public community instances.
 
 ## 中文说明
+
+从 0.2.0 开始，软件直接读取 NOAA/NCEP GFS 和 ECMWF IFS 官方天气数据，并按所选经纬度本地计算日出日落。界面展示官方云量、可用天气字段、起报时间、有效时间以及实际模型网格和距离；官方天气不是火烧云鲜艳度。SunsetBot 的鲜艳度、AOD 和图片仍单独标注来源，互不冒充。GFS 使用最近的小时预报，IFS 使用最近的三小时预报，界面会显示实际有效时间。缺项显示“—”，拒绝超过 30 小时的模型起报；最新候选不可用时尝试前四个周期，不拿旧缓存顶替。日出日落和倒计时不再依赖 SunsetBot，所有时刻仍显示为北京时间；地形、建筑和云雾可能影响实际观测。
 
 霞光来信是一款 Windows 朝霞、晚霞查询软件，提供 SunsetBot 的 GFS 和 EC 数据、官方区域图的本地局部放大，以及可选的每天 15:00 和 21:00 消息通知。点击整条消息通知可打开对应的朝霞或晚霞页面。界面可切换 English / 简体中文。请从 GitHub Release 下载带安装向导的安装包；安装时可以选择定时通知和桌面快捷方式，软件不设置开机自启。
 

@@ -1,5 +1,5 @@
 #define AppName "Glow Letters"
-#define AppVersion "0.1.2"
+#define AppVersion "0.2.0"
 #define AppPublisher "isCharles"
 #define AppExe "GlowLetters.exe"
 #ifndef AppDist

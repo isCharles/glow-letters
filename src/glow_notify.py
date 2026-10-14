@@ -1,5 +1,6 @@
 """Windows 消息通知入口；定时任务运行它，不打开完整窗口。"""
 import argparse
+import concurrent.futures
 import datetime as dt
 import json
 import os
@@ -11,6 +12,7 @@ from winotify import Notification, audio
 
 import glow_location
 import sunsetbot
+import official_weather
 
 
 def message(data, event):
@@ -21,17 +23,25 @@ def message(data, event):
     title = (f'{date.month}月{date.day}日{label}来信' if language == 'zh' else
              f'{label.title()} letter · {date:%b %d}')
     rows = {row['model']: row for row in data['results']}
-    lines = []
+    official = data.get('official', {})
+    weather = {row['model']: row for row in official.get('results', [])}
+    solar = official.get('solar', {}).get(event)
+    lines = [(('太阳时刻 ' if language == 'zh' else 'Solar time ') + solar[11:16] +
+              (' · 本地计算' if language == 'zh' else ' · locally calculated'))] if solar else []
     for model in ('GFS', 'EC'):
         row = rows.get(model, {})
         if row.get('available'):
             raw = row['raw']
-            event_time = raw['tb_event_time'][-8:-3]
-            lines.append(f'{model}  {event_time}  ' +
-                         (f'鲜艳度 {raw["tb_quality"]}' if language == 'zh' else f'glow {raw["tb_quality"]}') +
-                         f'  AOD {raw["tb_aod"]}')
+            glow = (f'SunsetBot 鲜艳度 {raw["tb_quality"]}' if language == 'zh' else f'SunsetBot glow {raw["tb_quality"]}')
+            glow += f' · AOD {raw.get("tb_aod", "—")}'
         else:
-            lines.append(f'{model}  ' + ('暂无可用预报' if language == 'zh' else 'forecast unavailable'))
+            glow = 'SunsetBot 缺报' if language == 'zh' else 'SunsetBot unavailable'
+        official_row = weather.get(model, {})
+        cloud = official_row.get('fields', {}).get('cloud_total_pct') if official_row.get('available') else None
+        provider = 'NOAA GFS' if model == 'GFS' else 'ECMWF IFS'
+        cloud_text = ((f'总云 {cloud:g}%' if language == 'zh' else f'cloud {cloud:g}%') if cloud is not None else
+                      ('天气缺报' if language == 'zh' else 'weather unavailable'))
+        lines.append(f'{provider} {cloud_text} · {glow}')
     lines.append('数据送到，惊喜留给天空。' if language == 'zh' else 'The data is in. The sky keeps the surprise.')
     return title, '\n'.join(lines)
 
@@ -59,11 +69,22 @@ def run(event='today-sunset', test=False):
     if test:
         notify('Glow Letters · test / 霞光来信 · 测试', 'A little note from the sky. / 天空递来一封测试信。')
         return
-    city = glow_location.load().get('city')
-    if not city:
+    location = glow_location.load()
+    city = location.get('city')
+    has_coordinates = 'lat' in location and 'lon' in location
+    if not city and not has_coordinates:
         return
     try:
-        data = sunsetbot.fetch(city=city, events=[event])
+        data = {'results': []}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            sb = pool.submit(sunsetbot.fetch, city, [event], retry_count=0, request_timeout=(5, 10)) if city else None
+            official = pool.submit(official_weather.fetch, location['lat'], location['lon'], [event]) if has_coordinates else None
+            if sb:
+                try: data = sb.result()
+                except Exception: pass
+            if official:
+                try: data['official'] = official.result()
+                except Exception as error: data['official'] = {'results': [], 'error': str(error)}
         logs = pathlib.Path(os.environ.get('LOCALAPPDATA', pathlib.Path.home())) / 'GlowLetters' / 'history'
         logs.mkdir(parents=True, exist_ok=True)
         stamp = dt.datetime.now(sunsetbot.TZ).strftime('%Y%m%d-%H%M%S-%f')
