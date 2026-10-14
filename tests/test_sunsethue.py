@@ -69,10 +69,11 @@ class SunsethueTests(unittest.TestCase):
             self.assertIsNone(glow_credentials.load(path.with_name('missing')))
 
     def test_primary_result_and_preparation_times(self):
+        self.raw['data'].update(quality=.9, quality_text='Excellent')
         row = self.normalize(self.raw)
         advice = glow_outlook.result(self.event, {'results': [row]}, language='zh', now=self.now)
         self.assertEqual(advice['source'], 'Sunsethue')
-        self.assertIn('中烧候选', advice['summary'])
+        self.assertIn('大烧候选', advice['summary'])
         self.assertIn('05:39', advice['plan'])
         self.assertIn('05:59', advice['plan'])
         self.assertIn('不是发生概率', advice['source_text'])
@@ -89,6 +90,16 @@ class SunsethueTests(unittest.TestCase):
         advice = glow_outlook.result(self.event, {'results': [self.normalize(self.raw)]},
             {'results': [{'event': self.event, 'available': True, 'quality': .073}]}, language='zh', now=self.now)
         self.assertIn('分歧', advice['summary'])
+        self.assertNotIn('最晚', advice['plan'])
+
+    def test_medium_sunrise_has_no_alarm_and_small_sunset_no_special_trip(self):
+        advice = glow_outlook.result(self.event, {'results': [self.normalize(self.raw)]}, language='zh', now=self.now)
+        self.assertIn('不必特意早起', advice['summary'])
+        self.assertNotIn('最晚', advice['plan'])
+        row = self.normalize(self.raw)
+        row.update(event='today-sunset', category='good')
+        advice = glow_outlook.result('today-sunset', {'results': [row]}, language='zh', now=self.now)
+        self.assertIn('不专程', advice['summary'])
         self.assertNotIn('最晚', advice['plan'])
 
     def test_notification_leads_with_result_without_cloud_dump(self):

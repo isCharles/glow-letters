@@ -12,6 +12,8 @@ The main card and notification translate Sunsethue's Poor/Fair/Good/Great/Excell
 
 The Chinese presentation conservatively maps those five provider categories to 偏弱 / 一般 / 小烧候选 / 中烧候选 / 大烧候选. These are app display labels, not Sunsethue's original terminology or calibrated burn intensity. If Sunsethue is Good or above but a valid SunsetBot regional model is below its medium-glow threshold, the app flags disagreement and avoids recommending a special trip. The two providers' scores are not numerically comparable.
 
+Planning is conservative: sunset needs Great/Excellent (medium-or-better candidates) for a special trip; sunrise needs Excellent (a strong-glow candidate) for an early alarm. Weaker categories still appear in daily letters, with no special-trip/alarm suggestion. Conflicting provider outlooks suppress both suggestions.
+
 If Sunsethue is unavailable, fresh valid SunsetBot regional forecasts may provide a clearly named fallback. With no usable quality forecast, the app says it cannot judge; raw weather is never converted into an invented score. `GlowLetters.exe --sunsethue-json result.json --lat 40 --lon 116 --event tomorrow-sunrise` verifies the provider using your locally configured key without opening the app. A missing key produces `not_configured`, not fabricated data. Source: [Sunsethue API](https://sunsethue.com/dev-api), [quality guide](https://sunsethue.com/guide).
 
 Forecast requests send the selected coordinates and the `x-api-key` authentication header directly to Sunsethue over HTTPS. The provider receives these requests; this project runs no intermediary server. You may revoke the key in the provider's portal and remove the local encrypted file to disconnect the service.
