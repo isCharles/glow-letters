@@ -28,8 +28,6 @@ def message(data, event):
     solar = official.get('solar', {}).get(event)
     advice = glow_outlook.result(event, data.get('sunsethue'), data, solar, language, now)
     lines = [advice['summary'], advice['plan'], advice['source_text']]
-    if solar:
-        lines.append(('太阳时刻 ' if language == 'zh' else 'Sun event ') + solar[11:16])
     lines = [line for line in lines if line]
     return title, '\n'.join(lines)
 

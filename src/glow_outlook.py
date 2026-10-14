@@ -3,12 +3,11 @@ import datetime as dt
 import official_weather
 
 ADVICE = {
-    'zh': {'poor': '偏弱', 'fair': '一般', 'good': '小烧候选',
-           'great': '中烧候选', 'excellent': '大烧候选'},
-    'en': {'poor': 'Weak outlook', 'fair': 'Ordinary outlook', 'good': 'Modest glow candidate',
-           'great': 'Medium-glow candidate', 'excellent': 'Strong-glow candidate'},
+    'zh': {'poor': '不烧', 'fair': '微烧', 'good': '小烧', 'great': '中烧', 'excellent': '大烧'},
+    'en': {'poor': 'No glow', 'fair': 'Faint glow', 'good': 'Small glow',
+           'great': 'Medium glow', 'excellent': 'Strong glow'},
 }
-CATEGORY = {'poor': '偏弱', 'fair': '一般', 'good': '小烧候选', 'great': '中烧候选', 'excellent': '大烧候选'}
+CATEGORY = ADVICE['zh']
 
 
 def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=None):
@@ -29,33 +28,28 @@ def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=No
         summary = '连接 Sunsethue，获取观赏建议' if language == 'zh' else 'Connect Sunsethue for viewing advice'
     source_text = ''
     if source == 'Sunsethue':
-        grade = CATEGORY[category] if language == 'zh' else category.title()
-        source_text = (f'Sunsethue {category.title()} → {grade} · 质量评分 {score*100:.0f}/100（中文展示映射，不是发生概率）' if language == 'zh' else
-                       f'Sunsethue forecast: {grade} · quality {score*100:.0f}/100 (not a probability)')
+        source_text = f'Sunsethue · {score*100:.0f}/100'
     elif source == 'SunsetBot':
         source_text = 'Sunsethue 暂不可用；参考 SunsetBot 地区预报' if language == 'zh' else 'Sunsethue unavailable; using the SunsetBot regional forecast'
         if language == 'zh':
-            summary = {'poor': '偏弱', 'fair': '小烧', 'good': '中烧候选', 'great': '大烧候选'}[category]
+            summary = {'poor': '不烧', 'fair': '小烧', 'good': '中烧', 'great': '大烧'}[category]
         else:
-            summary = {'poor': 'Weak outlook', 'fair': 'Modest glow candidate',
-                       'good': 'Medium-glow candidate', 'great': 'Strong-glow candidate'}[category]
+            summary = {'poor': 'No glow', 'fair': 'Small glow', 'good': 'Medium glow', 'great': 'Strong glow'}[category]
     medium = (score >= .6 if source == 'Sunsethue' else score >= .4) if score is not None else False
     disagreement = bool(source == 'Sunsethue' and medium and rows and min(row['quality'] for row in rows) < .4)
     if disagreement:
-        source_text += ('；SunsetBot 地区预报较弱，评分体系不同' if language == 'zh' else '; SunsetBot regional outlook is weaker; scores use different scales')
+        source_text += ' · 预报分歧' if language == 'zh' else ' · forecasts disagree'
     sunrise = event.endswith('sunrise')
     # Nearby viewing starts at medium; trips/alarms require strong forecasts.
     # Keep the two providers' scales separate. Excellent's cutoff is provider-owned.
     worthy = (medium and category == 'excellent') if source == 'Sunsethue' else category == 'great'
     if category:
         if disagreement:
-            summary = '预报有分歧，不推荐去看' if language == 'zh' else 'Forecasts disagree — viewing not recommended'
+            summary = '预报有分歧，先不去' if language == 'zh' else 'Forecasts disagree — skip this one'
         elif worthy:
-            summary += ('，值得早起去看' if sunrise else '，值得专程去看') if language == 'zh' else (' — worth an early alarm' if sunrise else ' — worth a special trip')
+            summary += ('，值得早起' if sunrise else '，值得专程看') if language == 'zh' else (' — worth an early alarm' if sunrise else ' — worth a trip')
         elif medium:
-            summary += ('，不必特意早起' if sunrise else '，顺路看看即可') if language == 'zh' else (' — no early alarm needed' if sunrise else ' — take a look if already nearby')
-        else:
-            summary += '，不推荐去看' if language == 'zh' else ' — viewing not recommended'
+            summary += ('，不必早起' if sunrise else '，顺路看') if language == 'zh' else (' — no early alarm needed' if sunrise else ' — nearby look')
     plan = ''
     if solar:
         center = dt.datetime.fromisoformat(solar)
