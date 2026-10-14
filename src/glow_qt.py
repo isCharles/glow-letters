@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import threading
+import subprocess
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -12,19 +13,27 @@ from PIL import Image
 from PyQt5.QtCore import QObject, Qt, QTimer, QUrl, pyqtSignal
 from PyQt5.QtGui import QDesktopServices, QFont, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QFrame, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
+    QApplication, QLineEdit, QListWidget, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 import glow_location
 import glow_map
 from glow_i18n import tr
 import sunsetbot
+import official_weather
+import sunsethue
+import glow_credentials
+import glow_outlook
+import glow_update
 
 BASE = pathlib.Path(__file__).resolve().parent
 DATA = pathlib.Path(os.environ.get('LOCALAPPDATA', pathlib.Path.home())) / 'GlowLetters' / 'history'
 
 
 class Bridge(QObject):
+    update = pyqtSignal(object, bool)
+    hue = pyqtSignal(int, object)
+    official = pyqtSignal(int, object)
     forecast = pyqtSignal(int, object)
     map = pyqtSignal(int, str, str, object)
     location = pyqtSignal(object)
@@ -76,14 +85,21 @@ class GlowWindow(QWidget):
         self.location = glow_location.load()
         self.language = self.location.get('language', 'en')
         self.data = None
+        self.official_data = None
+        self.hue_data = None
+        self.solar = {}
         self.maps_data = {}
         self.generation = 0
         self.bridge = Bridge()
         self.bridge.forecast.connect(self.on_forecast)
+        self.bridge.official.connect(self.on_official)
+        self.bridge.hue.connect(self.on_hue)
+        self.bridge.update.connect(self.on_update)
+        self.updating = False
         self.bridge.map.connect(self.on_map)
         self.bridge.location.connect(self.on_location)
         self.bridge.matched.connect(self.on_matched)
-        self.setWindowTitle(tr(self.language, 'app') + ' · SunsetBot')
+        self.setWindowTitle(tr(self.language, 'app'))
         self.resize(940, 790)
         self.setMinimumSize(800, 650)
         self.setStyleSheet('''
@@ -141,6 +157,14 @@ class GlowWindow(QWidget):
             controls.addWidget(button)
             self.action_buttons[key] = button
         layout.addLayout(controls)
+        self.service_button = QPushButton('预报服务' if self.language == 'zh' else 'Forecast service')
+        self.service_button.clicked.connect(self.configure_service)
+        service_row = QHBoxLayout()
+        service_row.addWidget(self.service_button)
+        self.update_button = QPushButton('检查更新' if self.language == 'zh' else 'Check for updates')
+        self.update_button.clicked.connect(lambda: self.check_updates(True))
+        service_row.addWidget(self.update_button)
+        layout.addLayout(service_row)
         clock_frame = QFrame(objectName='clockbox')
         clock_layout = QVBoxLayout(clock_frame)
         clock_layout.setContentsMargins(20, 15, 20, 15)
@@ -148,6 +172,9 @@ class GlowWindow(QWidget):
         clock_layout.addWidget(self.clock)
         layout.addWidget(clock_frame)
         self.cards = {}
+        self.official_labels = {}
+        self.outlook_labels = {}
+        self.detail_buttons = {}
         for kind in ('sunrise', 'sunset'):
             card = QFrame(objectName='card')
             box = QVBoxLayout(card)
@@ -156,6 +183,21 @@ class GlowWindow(QWidget):
             title = label('', 16, True)
             box.addWidget(title)
             box.addSpacing(8)
+            summary, plan, source = label('', 18, True, '#f0b680'), label('', 10), label('', 9, color='#b2c6d9')
+            for item in (summary, plan, source):
+                item.setWordWrap(True)
+                box.addWidget(item)
+            self.outlook_labels[kind] = (summary, plan, source)
+            details = QWidget()
+            details_box = QVBoxLayout(details)
+            details_box.setContentsMargins(0, 0, 0, 0)
+            details.hide()
+            toggle = QPushButton('查看依据' if self.language == 'zh' else 'View details')
+            toggle.setCheckable(True)
+            toggle.toggled.connect(details.setVisible)
+            self.detail_buttons[kind] = toggle
+            box.addWidget(toggle)
+            box.addWidget(details)
             fields = {}
             names = ['time', 'remaining_' + kind, 'quality', 'aod']
             for index, name in enumerate(names):
@@ -169,8 +211,13 @@ class GlowWindow(QWidget):
                 value = label(tr(self.language, 'loading'), 12, True)
                 line.addWidget(value)
                 fields[name] = (row_label, value)
-                box.addWidget(row)
+                details_box.addWidget(row)
             self.cards[kind] = (title, fields)
+            official = label('', 10, color='#b8d5e9')
+            official.setWordWrap(True)
+            box.addSpacing(12)
+            details_box.addWidget(official)
+            self.official_labels[kind] = official
             layout.addWidget(card)
         maps_frame = QFrame(objectName='mapbox')
         map_line = QHBoxLayout(maps_frame)
@@ -235,17 +282,84 @@ class GlowWindow(QWidget):
         self.timer.start(1000)
         self.tick()
         self.query()
+        QTimer.singleShot(1500, lambda: self.check_updates(False))
+
+    def check_updates(self, manual=False):
+        if self.updating: return
+        self.updating = True
+        self.update_button.setEnabled(False)
+        def worker():
+            try: result = glow_update.check()
+            except Exception: result = {'state': 'error'}
+            self.bridge.update.emit(result, manual)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_update(self, result, manual):
+        self.updating = False
+        self.update_button.setEnabled(True)
+        zh = self.language == 'zh'
+        title = '软件更新' if zh else 'App update'
+        if result['state'] == 'ready':
+            text = (f"新版 {result['version']} 已下载并校验。现在打开安装向导吗？\n安装前会关闭软件，地点与 Key 会保留。" if zh else
+                    f"Version {result['version']} is downloaded and verified. Open the setup wizard now?\nThe app will close; your location and key will be kept.")
+            if QMessageBox.question(self, title, text, QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
+                try: subprocess.Popen([result['path']])
+                except OSError:
+                    QMessageBox.warning(self, title, '无法打开安装向导' if zh else 'Could not open the setup wizard')
+                    return
+                QApplication.quit()
+        elif manual:
+            QMessageBox.information(self, title, ('已是最新版' if zh else 'You are up to date') if result['state'] == 'current' else
+                                    ('暂时无法检查更新，请稍后重试' if zh else 'Could not check for updates; try again later'))
 
     def change_day(self, index):
         self.day = 'tomorrow' if index else 'today'
         self.query()
 
+    def configure_service(self):
+        zh = self.language == 'zh'
+        dialog = QDialog(self)
+        dialog.setWindowTitle('Sunsethue · ' + ('预报服务' if zh else 'Forecast service'))
+        box = QVBoxLayout(dialog)
+        info = label(('使用你自己的免费 API Key。仅加密保存在本机，不写入查询记录。' if zh else
+                      'Use your own free API key. Encrypted on this PC; never included in forecast logs.'), 10)
+        info.setWordWrap(True)
+        box.addWidget(info)
+        signup = QPushButton('申请免费 Key' if zh else 'Get a free key')
+        signup.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(sunsethue.SIGNUP)))
+        box.addWidget(signup)
+        key = QLineEdit()
+        key.setEchoMode(QLineEdit.Password)
+        key.setPlaceholderText('API Key')
+        box.addWidget(key)
+        status = label(('已配置；输入新 Key 可替换' if zh else 'Configured; enter a new key to replace it') if glow_credentials.load() else
+                       ('尚未配置' if zh else 'Not configured'), 10)
+        box.addWidget(status)
+        save = QPushButton('保存并查询' if zh else 'Save and refresh')
+        def accept():
+            try:
+                glow_credentials.save(key.text())
+            except (OSError, ValueError):
+                status.setText('保存失败，请检查 Key' if zh else 'Could not save; check the key')
+                return
+            key.clear()
+            dialog.accept()
+            self.query()
+        save.clicked.connect(accept)
+        box.addWidget(save)
+        dialog.resize(510, 240)
+        dialog.exec_()
+
     def change_language(self, index):
         self.language = 'zh' if index else 'en'
         self.location['language'] = self.language
         glow_location.save(self.location)
-        self.setWindowTitle(tr(self.language, 'app') + ' · SunsetBot')
+        self.setWindowTitle(tr(self.language, 'app'))
         self.app_title.setText(tr(self.language, 'app'))
+        self.service_button.setText('预报服务' if self.language == 'zh' else 'Forecast service')
+        self.update_button.setText('检查更新' if self.language == 'zh' else 'Check for updates')
+        for button in self.detail_buttons.values():
+            button.setText('查看依据' if self.language == 'zh' else 'View details')
         self.subtitle.setText(tr(self.language, 'subtitle'))
         for index, key in enumerate(('today', 'tomorrow')):
             self.day_select.setItemText(index, tr(self.language, key))
@@ -281,15 +395,33 @@ class GlowWindow(QWidget):
         self.render_maps()
 
     def query(self):
-        if not self.location.get('city'):
+        has_coordinates = 'lat' in self.location and 'lon' in self.location
+        if not self.location.get('city') and not has_coordinates:
             self.status.setText(tr(self.language, 'select_location'))
             self.render()
             self.render_maps()
             return
         self.generation += 1
         generation = self.generation
-        day, city = self.day, self.location['city']
+        day, city = self.day, self.location.get('city')
         self.data = None
+        self.official_data = None
+        self.hue_data = None
+        self.solar = {}
+        if has_coordinates:
+            events = [f'{self.day}-sunrise', f'{self.day}-sunset']
+            self.solar = official_weather.solar_events(self.location['lat'], self.location['lon'], events)
+            lat, lon = self.location['lat'], self.location['lon']
+            def official_worker():
+                try: result = official_weather.fetch(lat, lon, events)
+                except Exception as error: result = str(error)
+                self.bridge.official.emit(generation, result)
+            threading.Thread(target=official_worker, daemon=True).start()
+            def hue_worker():
+                try: result = sunsethue.fetch(lat, lon, events)
+                except Exception: result = {'results': []}
+                self.bridge.hue.emit(generation, result)
+            threading.Thread(target=hue_worker, daemon=True).start()
         self.maps_data = {}
         self.status.setText(tr(self.language, 'querying'))
         self.render()
@@ -302,7 +434,8 @@ class GlowWindow(QWidget):
                 (DATA / f'{stamp}-{day}.json').write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
                 self.bridge.forecast.emit(generation, data)
             except Exception as error: self.bridge.forecast.emit(generation, str(error))
-        threading.Thread(target=forecast_worker, daemon=True).start()
+        if city:
+            threading.Thread(target=forecast_worker, daemon=True).start()
         for model in ('GFS', 'EC'):
             for kind in ('sunrise', 'sunset'):
                 def map_worker(m=model, k=kind):
@@ -316,7 +449,22 @@ class GlowWindow(QWidget):
         if isinstance(result, dict):
             self.data = result
             self.status.setText(tr(self.language, 'updated') + ' ' + result['fetched_at'].replace('T', ' ')[:19] + '  ·  SunsetBot')
-        else: self.status.setText(tr(self.language, 'query_failed') + result)
+        else: self.status.setText('SunsetBot · ' + tr(self.language, 'query_failed') + result)
+        self.render()
+
+    def on_official(self, generation, result):
+        if generation != self.generation: return
+        self.official_data = result if isinstance(result, dict) else {'results': [], 'error': result}
+        if isinstance(result, dict):
+            self.solar = result['solar']
+            DATA.mkdir(parents=True, exist_ok=True)
+            stamp = dt.datetime.now(sunsetbot.TZ).strftime('%Y%m%d-%H%M%S-%f')
+            (DATA / f'{stamp}-official.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+        self.render()
+
+    def on_hue(self, generation, result):
+        if generation != self.generation: return
+        self.hue_data = result
         self.render()
 
     def on_map(self, generation, model, kind, result):
@@ -423,26 +571,33 @@ class GlowWindow(QWidget):
 
     def render(self):
         rows = self.rows()
+        official_rows = {row['event']: row for row in (self.official_data or {}).get('results', []) if row['model'] == self.model}
         for kind, (title, fields) in self.cards.items():
-            title.setText(tr(self.language, self.day) + ' · ' + tr(self.language, kind) + ' · ' + self.model)
+            title.setText(tr(self.language, self.day) + ' · ' + tr(self.language, kind))
+            advice = glow_outlook.result(f'{self.day}-{kind}', self.hue_data, self.data,
+                                        self.solar.get(f'{self.day}-{kind}'), self.language)
+            for item, key in zip(self.outlook_labels[kind], ('summary', 'plan', 'source_text')):
+                item.setText(advice[key])
             row = rows.get(f'{self.day}-{kind}')
             valid = bool(row and row.get('available'))
             raw = row.get('raw', {}) if valid else {}
-            placeholder = (tr(self.language, 'select_location') if not self.location.get('city') else
+            placeholder = (tr(self.language, 'no_sunsetbot_area') if not self.location.get('city') else
                            tr(self.language, 'missing') if self.data else tr(self.language, 'loading'))
             time = placeholder
-            if valid:
-                center = dt.datetime.fromisoformat(row['event_time'])
-                before, after = (15, 5) if kind == 'sunrise' else (5, 15)
-                time = (center - dt.timedelta(minutes=before)).strftime('%H:%M:%S') + ' ~ ' + (center + dt.timedelta(minutes=after)).strftime('%H:%M:%S')
+            solar_time = self.solar.get(f'{self.day}-{kind}')
+            if solar_time:
+                center = dt.datetime.fromisoformat(solar_time)
+                time = center.strftime('%H:%M:%S') + (' · 太阳时刻' if self.language == 'zh' else ' · Sun event')
             fields['time'][1].setText(time)
             quality_text = raw.get('tb_quality')
             aod_text = raw.get('tb_aod')
             fields['quality'][1].setText(str(quality_text) if quality_text is not None else placeholder)
+            fields['quality'][0].setText('SunsetBot ' + self.model + ' · ' + tr(self.language, 'quality'))
             fields['aod'][1].setText(str(aod_text) if aod_text is not None else placeholder)
             aod = row.get('aod') if valid else None
             color = '#ff8b88' if aod is not None and aod >= 1 else '#efbd86' if aod is not None and aod >= .5 else '#f1f5fb'
             fields['aod'][1].setStyleSheet(f'color:{color}; background:transparent;')
+            self.official_labels[kind].setText(official_weather.describe(official_rows.get(f'{self.day}-{kind}'), self.language) if self.official_data is not None else tr(self.language, 'official_loading'))
         self.tick()
 
     def tick(self):
@@ -452,8 +607,9 @@ class GlowWindow(QWidget):
         for kind, (_, fields) in self.cards.items():
             row = rows.get(f'{self.day}-{kind}')
             text = '—'
-            if row and row.get('available'):
-                seconds = int((dt.datetime.fromisoformat(row['event_time']) - now).total_seconds())
+            solar_time = self.solar.get(f'{self.day}-{kind}')
+            if solar_time:
+                seconds = int((dt.datetime.fromisoformat(solar_time) - now).total_seconds())
                 text = tr(self.language, 'passed') if seconds < 0 else f'{seconds//3600:02d}:{seconds//60%60:02d}:{seconds%60:02d}'
             fields['remaining_' + kind][1].setText(text)
 
