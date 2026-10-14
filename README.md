@@ -10,9 +10,9 @@ Get your personal free API key from the [Sunsethue developer portal](https://sun
 
 The main card and notification translate Sunsethue's Poor/Fair/Good/Great/Excellent categories into viewing advice. The quality score is **not a probability**, and a good forecast does not guarantee a spectacular sky. Suggested departure times assume a 10-minute walk and arrival 15 minutes before sunrise/sunset; sunrise wake-up advice adds 20 minutes to prepare. These are planning suggestions, not predicted peak-glow times. Golden/blue-hour data, when returned, are retained in the result JSON rather than relabeled as peak glow.
 
-The Chinese presentation conservatively maps those five provider categories to 偏弱 / 一般 / 小烧候选 / 中烧候选 / 大烧候选. These are app display labels, not Sunsethue's original terminology or calibrated burn intensity. If Sunsethue is Good or above but a valid SunsetBot regional model is below its medium-glow threshold, the app flags disagreement and avoids recommending a special trip. The two providers' scores are not numerically comparable.
+The concise Chinese presentation maps the five provider categories to 不烧 / 微烧 / 小烧 / 中烧 / 大烧. Poor forecasts such as 16/100 simply show “不烧” (“No glow”), with no additional viewing suggestion. These are forecast display labels, not a guarantee of actual sky colors or calibrated burn intensity. If Sunsethue reaches a medium candidate but a valid SunsetBot regional model is below its medium-glow threshold, the app flags disagreement and suppresses viewing suggestions. The two providers' scores are not numerically comparable.
 
-Planning is conservative: sunset needs Great/Excellent (medium-or-better candidates) for a special trip; sunrise needs Excellent (a strong-glow candidate) for an early alarm. Weaker categories still appear in daily letters, with no special-trip/alarm suggestion. Conflicting provider outlooks suppress both suggestions.
+Planning is conservative: Sunsethue scores below 60/100 do not recommend viewing at all; 60+ medium candidates suggest nearby sunset viewing only. Special trips and early sunrise alarms require the provider's Excellent category (a strong-glow candidate). The provider owns the Great/Excellent boundary; we do not invent a numeric strong-glow cutoff. SunsetBot fallback uses its separate 0.4 medium / 0.8 strong thresholds. Weaker forecasts still appear in daily letters without any viewing suggestion. Conflicting usable provider outlooks suppress viewing advice.
 
 If Sunsethue is unavailable, fresh valid SunsetBot regional forecasts may provide a clearly named fallback. With no usable quality forecast, the app says it cannot judge; raw weather is never converted into an invented score. `GlowLetters.exe --sunsethue-json result.json --lat 40 --lon 116 --event tomorrow-sunrise` verifies the provider using your locally configured key without opening the app. A missing key produces `not_configured`, not fabricated data. Source: [Sunsethue API](https://sunsethue.com/dev-api), [quality guide](https://sunsethue.com/guide).
 
@@ -40,7 +40,7 @@ SunsetBot and public OpenStreetMap services are independent third-party services
 
 ## Build from source
 
-Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app (including ECMWF ecCodes), and creates `release/GlowLetters-0.2.0-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
+Use Python 3.13 on Windows and [Inno Setup 6](https://jrsoftware.org/isinfo.php). In PowerShell, run `./build.ps1`. This installs Python dependencies, builds a PyInstaller app (including ECMWF ecCodes), and creates `release/GlowLetters-0.2.1-Windows-x64-Setup.exe`. GitHub Actions uses the same build on a `v*` tag and attaches the installer to a Release.
 
 To run from source without building, install `requirements.txt` and run `python src/glow_app.py`. `python src/glow_app.py --test-notification` sends one Windows test notification. `python src/sunsetbot.py --city '北京-海淀区' --event tomorrow-sunrise` prints fresh JSON; exit codes 0, 2 and 3 mean full, partial and no valid model forecasts respectively.
 
@@ -54,7 +54,7 @@ Place searches and nearby-place lookups are cached locally to reduce load on pub
 
 ## 中文说明
 
-软件打开后会自动检查本仓库的最新稳定 Release，有新版先在后台下载，核对文件大小和 SHA-256 后再询问是否安装；点击“是”才打开安装向导，点击“否”保留下载，之后可点“检查更新”重试。每日定时消息不会触发更新对话框。晚霞达到中烧候选以上才建议专程出行，朝霞达到大烧候选才建议早起；服务预报存在明显分歧时不建议专程赶去或早起。
+软件打开后会自动检查本仓库的最新稳定 Release，有新版先在后台下载，核对文件大小和 SHA-256 后再询问是否安装；点击“是”才打开安装向导，点击“否”保留下载，之后可点“检查更新”重试。每日定时消息不会触发更新对话框。Sunsethue 低于60分不推荐去看，60分起的中烧候选才建议顺路看晚霞；专程出行或朝霞早起需达到服务原生 Excellent（大烧候选）等级，不自行编造该等级的分数门槛。SunsetBot 降级采用其独立的0.4中烧、0.8大烧门槛。服务存在明显分歧时不推荐去看。
 
 先在 [Sunsethue 开发者页面](https://sunsethue.com/dev-api) 申请个人免费 API Key，再在软件“预报服务”中保存。Key 使用 Windows DPAPI 加密，仅供当前 Windows 账户读取，不进入预报记录或仓库。主界面和消息通知优先给出“值不值得出去看”的建议，NOAA/ECMWF 天气放在“查看依据”里。Sunsethue 的质量评分不是发生概率；出门建议按步行10分钟、日出日落前15分钟到场估算，朝霞再留20分钟准备，不能称为最佳霞光窗口。Sunsethue 不可用时明确标注 SunsetBot 地区预报降级；两个服务都缺报时不编造结论。免费方案用于个人爱好，每日1,000额度，单次质量预报5额度，商用请先查看服务条款。
 

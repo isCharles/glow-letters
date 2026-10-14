@@ -7,7 +7,7 @@ import tempfile
 from urllib.parse import urlparse
 import requests
 
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 REPO = 'isCharles/glow-letters'
 API = f'https://api.github.com/repos/{REPO}/releases/latest'
 CACHE = pathlib.Path(os.environ.get('LOCALAPPDATA', pathlib.Path.home())) / 'GlowLetters' / 'updates'

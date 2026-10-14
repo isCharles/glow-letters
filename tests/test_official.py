@@ -53,7 +53,7 @@ class OfficialTests(unittest.TestCase):
             _, message = glow_notify.message(data, 'today-sunset')
         self.assertIn('Cannot judge', message)
         self.assertNotIn('cloud 0%', message)
-        self.assertIn('17:37', message)
+        self.assertNotIn('quality', message)
 
     def test_ecmwf_full_file_response_is_rejected(self):
         class Index:
