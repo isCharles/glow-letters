@@ -10,6 +10,8 @@ Get your personal free API key from the [Sunsethue developer portal](https://sun
 
 The main card and notification translate Sunsethue's Poor/Fair/Good/Great/Excellent categories into viewing advice. The quality score is **not a probability**, and a good forecast does not guarantee a spectacular sky. Suggested departure times assume a 10-minute walk and arrival 15 minutes before sunrise/sunset; sunrise wake-up advice adds 20 minutes to prepare. These are planning suggestions, not predicted peak-glow times. Golden/blue-hour data, when returned, are retained in the result JSON rather than relabeled as peak glow.
 
+The Chinese presentation maps those five provider categories to 偏弱 / 小烧 / 中烧 / 大烧 / 极佳. These are app display labels, not Sunsethue's original terminology or a claim of calibrated burn intensity.
+
 If Sunsethue is unavailable, fresh valid SunsetBot regional forecasts may provide a clearly named fallback. With no usable quality forecast, the app says it cannot judge; raw weather is never converted into an invented score. `GlowLetters.exe --sunsethue-json result.json --lat 40 --lon 116 --event tomorrow-sunrise` verifies the provider using your locally configured key without opening the app. A missing key produces `not_configured`, not fabricated data. Source: [Sunsethue API](https://sunsethue.com/dev-api), [quality guide](https://sunsethue.com/guide).
 
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.

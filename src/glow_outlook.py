@@ -3,13 +3,13 @@ import datetime as dt
 import official_weather
 
 ADVICE = {
-    'zh': {'poor': '偏弱，不建议专程去看', 'fair': '普通，顺路看看就好',
-           'good': '有看头，值得出去看看', 'great': '值得专程去看', 'excellent': '很值得专程去看'},
+    'zh': {'poor': '偏弱，不建议专程去看', 'fair': '小烧，顺路看看就好',
+           'good': '中烧，值得出去看看', 'great': '大烧，值得专程去看', 'excellent': '极佳，很值得专程去看'},
     'en': {'poor': 'Subtle sky — skip the special trip', 'fair': 'Take a look if you are nearby',
            'good': 'Looking promising — head outside', 'great': 'Worth making time for',
            'excellent': 'Make time for this sky'},
 }
-CATEGORY = {'poor': '偏弱', 'fair': '普通', 'good': '不错', 'great': '很棒', 'excellent': '出色'}
+CATEGORY = {'poor': '偏弱', 'fair': '小烧', 'good': '中烧', 'great': '大烧', 'excellent': '极佳'}
 
 
 def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=None):
@@ -31,7 +31,7 @@ def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=No
     source_text = ''
     if source == 'Sunsethue':
         grade = CATEGORY[category] if language == 'zh' else category.title()
-        source_text = (f'Sunsethue 预报：{grade} · 质量评分 {score*100:.0f}/100（不是发生概率）' if language == 'zh' else
+        source_text = (f'Sunsethue {category.title()} → {grade} · 质量评分 {score*100:.0f}/100（中文展示映射，不是发生概率）' if language == 'zh' else
                        f'Sunsethue forecast: {grade} · quality {score*100:.0f}/100 (not a probability)')
     elif source == 'SunsetBot':
         source_text = 'Sunsethue 暂不可用；参考 SunsetBot 地区预报' if language == 'zh' else 'Sunsethue unavailable; using the SunsetBot regional forecast'
