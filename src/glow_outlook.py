@@ -46,6 +46,8 @@ def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=No
     # Provider categories are presentation mappings, not calibrated burn levels.
     # Only the strongest category warrants an early alarm; sunset needs Great+.
     worthy = category == 'excellent' if sunrise else category in ('great', 'excellent')
+    if source == 'SunsetBot':
+        worthy = category == 'great' if sunrise else category in ('good', 'great')
     if not disagreement and category:
         if sunrise and not worthy:
             summary += '，不必特意早起' if language == 'zh' else ' — no early alarm needed'

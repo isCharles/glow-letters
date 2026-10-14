@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import threading
+import subprocess
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -12,7 +13,7 @@ from PIL import Image
 from PyQt5.QtCore import QObject, Qt, QTimer, QUrl, pyqtSignal
 from PyQt5.QtGui import QDesktopServices, QFont, QPixmap
 from PyQt5.QtWidgets import (QComboBox, QDialog, QFrame, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
+    QApplication, QLineEdit, QListWidget, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget)
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 import glow_location
@@ -23,12 +24,14 @@ import official_weather
 import sunsethue
 import glow_credentials
 import glow_outlook
+import glow_update
 
 BASE = pathlib.Path(__file__).resolve().parent
 DATA = pathlib.Path(os.environ.get('LOCALAPPDATA', pathlib.Path.home())) / 'GlowLetters' / 'history'
 
 
 class Bridge(QObject):
+    update = pyqtSignal(object, bool)
     hue = pyqtSignal(int, object)
     official = pyqtSignal(int, object)
     forecast = pyqtSignal(int, object)
@@ -91,6 +94,8 @@ class GlowWindow(QWidget):
         self.bridge.forecast.connect(self.on_forecast)
         self.bridge.official.connect(self.on_official)
         self.bridge.hue.connect(self.on_hue)
+        self.bridge.update.connect(self.on_update)
+        self.updating = False
         self.bridge.map.connect(self.on_map)
         self.bridge.location.connect(self.on_location)
         self.bridge.matched.connect(self.on_matched)
@@ -154,7 +159,12 @@ class GlowWindow(QWidget):
         layout.addLayout(controls)
         self.service_button = QPushButton('预报服务' if self.language == 'zh' else 'Forecast service')
         self.service_button.clicked.connect(self.configure_service)
-        layout.addWidget(self.service_button)
+        service_row = QHBoxLayout()
+        service_row.addWidget(self.service_button)
+        self.update_button = QPushButton('检查更新' if self.language == 'zh' else 'Check for updates')
+        self.update_button.clicked.connect(lambda: self.check_updates(True))
+        service_row.addWidget(self.update_button)
+        layout.addLayout(service_row)
         clock_frame = QFrame(objectName='clockbox')
         clock_layout = QVBoxLayout(clock_frame)
         clock_layout.setContentsMargins(20, 15, 20, 15)
@@ -272,6 +282,35 @@ class GlowWindow(QWidget):
         self.timer.start(1000)
         self.tick()
         self.query()
+        QTimer.singleShot(1500, lambda: self.check_updates(False))
+
+    def check_updates(self, manual=False):
+        if self.updating: return
+        self.updating = True
+        self.update_button.setEnabled(False)
+        def worker():
+            try: result = glow_update.check()
+            except Exception: result = {'state': 'error'}
+            self.bridge.update.emit(result, manual)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_update(self, result, manual):
+        self.updating = False
+        self.update_button.setEnabled(True)
+        zh = self.language == 'zh'
+        title = '软件更新' if zh else 'App update'
+        if result['state'] == 'ready':
+            text = (f"新版 {result['version']} 已下载并校验。现在打开安装向导吗？\n安装前会关闭软件，地点与 Key 会保留。" if zh else
+                    f"Version {result['version']} is downloaded and verified. Open the setup wizard now?\nThe app will close; your location and key will be kept.")
+            if QMessageBox.question(self, title, text, QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
+                try: subprocess.Popen([result['path']])
+                except OSError:
+                    QMessageBox.warning(self, title, '无法打开安装向导' if zh else 'Could not open the setup wizard')
+                    return
+                QApplication.quit()
+        elif manual:
+            QMessageBox.information(self, title, ('已是最新版' if zh else 'You are up to date') if result['state'] == 'current' else
+                                    ('暂时无法检查更新，请稍后重试' if zh else 'Could not check for updates; try again later'))
 
     def change_day(self, index):
         self.day = 'tomorrow' if index else 'today'
@@ -318,6 +357,7 @@ class GlowWindow(QWidget):
         self.setWindowTitle(tr(self.language, 'app'))
         self.app_title.setText(tr(self.language, 'app'))
         self.service_button.setText('预报服务' if self.language == 'zh' else 'Forecast service')
+        self.update_button.setText('检查更新' if self.language == 'zh' else 'Check for updates')
         for button in self.detail_buttons.values():
             button.setText('查看依据' if self.language == 'zh' else 'View details')
         self.subtitle.setText(tr(self.language, 'subtitle'))

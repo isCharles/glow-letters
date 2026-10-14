@@ -20,6 +20,8 @@ Forecast requests send the selected coordinates and the `x-api-key` authenticati
 
 **Download:** use the Windows setup wizard attached to the latest GitHub Release. The installer offers optional daily notifications and a desktop shortcut. It does not start with Windows. Open the app, choose a place, and then inspect the forecast.
 
+**Updates:** when the window opens, the app checks this repository's latest stable GitHub Release and downloads a newer installer in the background. It verifies the asset's size and SHA-256 digest before asking whether to open the setup wizard. Nothing is installed until you choose Yes; No keeps the download for later. “Check for updates” retries manually. Scheduled notifications do not check updates or open upgrade dialogs. Installers are stored under `%LOCALAPPDATA%\GlowLetters\updates`. Missing verification metadata or a failed download never launches an installer.
+
 ## Location and forecast areas
 
 “Use my location” asks Windows for an approximate position and shows the returned coordinates and accuracy. Before sending those coordinates to Photon for nearby named OpenStreetMap places, the app asks for consent; you can instead use the coordinate alone. You can choose a building, park, or your current coordinate. “Search places” is available when Windows location or the nearby-places service cannot help. OpenStreetMap coverage varies: a dormitory or classroom can only appear if a map contributor has added it.

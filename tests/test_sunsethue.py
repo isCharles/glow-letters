@@ -96,6 +96,13 @@ class SunsethueTests(unittest.TestCase):
         advice = glow_outlook.result(self.event, {'results': [self.normalize(self.raw)]}, language='zh', now=self.now)
         self.assertIn('不必特意早起', advice['summary'])
         self.assertNotIn('最晚', advice['plan'])
+
+    def test_fallback_uses_its_own_medium_and_strong_thresholds(self):
+        for event, quality in [('today-sunset', .5), ('tomorrow-sunrise', .9)]:
+            advice = glow_outlook.result(event, sb_data={'results': [
+                {'event': event, 'available': True, 'quality': quality}]},
+                solar=self.target.isoformat(), language='zh', now=self.now)
+            self.assertIn('最晚', advice['plan'])
         row = self.normalize(self.raw)
         row.update(event='today-sunset', category='good')
         advice = glow_outlook.result('today-sunset', {'results': [row]}, language='zh', now=self.now)
