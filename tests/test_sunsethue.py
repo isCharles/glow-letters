@@ -72,7 +72,7 @@ class SunsethueTests(unittest.TestCase):
         row = self.normalize(self.raw)
         advice = glow_outlook.result(self.event, {'results': [row]}, language='zh', now=self.now)
         self.assertEqual(advice['source'], 'Sunsethue')
-        self.assertIn('值得专程', advice['summary'])
+        self.assertIn('中烧候选', advice['summary'])
         self.assertIn('05:39', advice['plan'])
         self.assertIn('05:59', advice['plan'])
         self.assertIn('不是发生概率', advice['source_text'])
@@ -84,6 +84,12 @@ class SunsethueTests(unittest.TestCase):
             {'event': self.event, 'available': True, 'quality': .5}]}, now=self.now)
         self.assertEqual(advice['source'], 'SunsetBot')
         self.assertIn('regional', advice['source_text'])
+
+    def test_disagreement_does_not_recommend_special_trip(self):
+        advice = glow_outlook.result(self.event, {'results': [self.normalize(self.raw)]},
+            {'results': [{'event': self.event, 'available': True, 'quality': .073}]}, language='zh', now=self.now)
+        self.assertIn('分歧', advice['summary'])
+        self.assertNotIn('最晚', advice['plan'])
 
     def test_notification_leads_with_result_without_cloud_dump(self):
         data = {'results': [], 'sunsethue': {'results': [self.normalize(self.raw)]}}
