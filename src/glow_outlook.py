@@ -1,5 +1,6 @@
 """Turn provider quality categories into plain viewing advice, not probabilities."""
 import datetime as dt
+from decimal import Decimal
 import official_weather
 
 ADVICE = {
@@ -28,7 +29,8 @@ def result(event, hue_data=None, sb_data=None, solar=None, language='en', now=No
         summary = '连接 Sunsethue，获取观赏建议' if language == 'zh' else 'Connect Sunsethue for viewing advice'
     source_text = ''
     if source == 'Sunsethue':
-        source_text = f'Sunsethue · {score*100:.0f}/100'
+        score_text = format((Decimal(str(score)) * 100).normalize(), 'f')
+        source_text = f'Sunsethue · {score_text}/100'
     elif source == 'SunsetBot':
         source_text = 'Sunsethue 暂不可用；参考 SunsetBot 地区预报' if language == 'zh' else 'Sunsethue unavailable; using the SunsetBot regional forecast'
         if language == 'zh':

@@ -119,6 +119,8 @@ class SunsethueTests(unittest.TestCase):
                 self.assertNotIn('nearby', advice['summary'])
                 if quality == .16:
                     self.assertEqual(advice['summary'], '不烧' if language == 'zh' else 'No glow')
+                if quality == .5999:
+                    self.assertIn('59.99/100', advice['source_text'])
                 self.assertNotIn('顺路', advice['summary'] + advice['plan'])
                 self.assertEqual(advice['plan'], '')
 
